@@ -4,8 +4,10 @@
 #include <cstring>
 #include <iostream>
 #include <netdb.h>
+#include <string_view>
 #include <sys/socket.h>
 #include <sys/types.h>
+#include <thread>
 #include <unistd.h>
 
 int main(int argc, char **argv)
@@ -38,8 +40,8 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    int connection_backlog = 5;
-    if (listen(server_fd, connection_backlog) != 0) {
+    int connection_slots = 10;
+    if (listen(server_fd, connection_slots) != 0) {
         std::cerr << "listen failed\n";
         return 1;
     }
@@ -48,23 +50,24 @@ int main(int argc, char **argv)
     int client_addr_len = sizeof(client_addr);
     std::cout << "Waiting for a client to connect...\n";
 
-    // You can use print statements as follows for debugging, they'll be visible
-    // when running tests.
-    std::cout << "Logs from your program will appear here!\n";
+    while (true) {
+        int client_fd =
+            accept(server_fd, (struct sockaddr *)&client_addr, (socklen_t *)&client_addr_len);
+        std::cout << "Client connected\n";
 
-    // Uncomment the code below to pass the first stage
+        std::thread client_thread([client_fd]() {
+            std::array<char, 1024> buffer{};
+            constexpr std::string_view res = "+PONG\r\n";
 
-    int client_fd =
-        accept(server_fd, (struct sockaddr *)&client_addr, (socklen_t *)&client_addr_len);
-    std::cout << "Client connected\n";
+            while (recv(client_fd, buffer.data(), buffer.size(), 0) > 0) {
+                send(client_fd, res.data(), res.size(), MSG_NOSIGNAL);
+            }
 
-    std::array<char, 1024> buffer{};
-    const char *res = "+PONG\r\n";
+            close(client_fd);
+        });
 
-    while (recv(client_fd, buffer.data(), buffer.size(), 0) != 0) {
-        send(client_fd, (const void *)res, strlen(res), 0);
+        client_thread.detach();
     }
-
     close(server_fd);
 
     return 0;
