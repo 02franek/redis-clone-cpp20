@@ -1,9 +1,9 @@
 #include <arpa/inet.h>
+#include <array>
 #include <cstdlib>
 #include <cstring>
 #include <iostream>
 #include <netdb.h>
-#include <string>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h>
@@ -28,7 +28,7 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    struct sockaddr_in server_addr;
+    struct sockaddr_in server_addr {};
     server_addr.sin_family = AF_INET;
     server_addr.sin_addr.s_addr = INADDR_ANY;
     server_addr.sin_port = htons(6379);
@@ -44,7 +44,7 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    struct sockaddr_in client_addr;
+    struct sockaddr_in client_addr {};
     int client_addr_len = sizeof(client_addr);
     std::cout << "Waiting for a client to connect...\n";
 
@@ -58,8 +58,12 @@ int main(int argc, char **argv)
         accept(server_fd, (struct sockaddr *)&client_addr, (socklen_t *)&client_addr_len);
     std::cout << "Client connected\n";
 
+    std::array<char, 1024> buffer{};
     const char *res = "+PONG\r\n";
-    send(client_fd, (const void *)res, strlen(res), 0);
+
+    while (recv(client_fd, buffer.data(), buffer.size(), 0) != 0) {
+        send(client_fd, (const void *)res, strlen(res), 0);
+    }
 
     close(server_fd);
 
