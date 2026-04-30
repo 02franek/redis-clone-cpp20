@@ -1,6 +1,7 @@
 {
-  "dependencies": [
-    "asio",
-    "pthreads"
-  ]
+    "dependencies": [
+	"asio",
+	"pthreads",
+	"gtest"
+    ]
 }
