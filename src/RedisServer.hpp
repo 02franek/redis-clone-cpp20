@@ -1,5 +1,7 @@
 #pragma once
 
+#include "CommandDispatcher.hpp"
+
 class TcpSocket {
   private:
     int fd_{-1};
@@ -22,6 +24,7 @@ class TcpSocket {
 class RedisSession {
   private:
     TcpSocket socket_;
+    CommandDispatcher dispatcher_;
 
   public:
     explicit RedisSession(TcpSocket socket);

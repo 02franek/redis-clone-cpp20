@@ -12,7 +12,8 @@ find_package(GTest CONFIG REQUIRED)
 enable_testing()
 
 file(GLOB_RECURSE SOURCE_FILES CONFIGURE_DEPENDS src/*.cpp)
-add_executable(redis ${SOURCE_FILES})
+list(REMOVE_ITEM SOURCE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/src/main.cpp")
+add_executable(redis src/main.cpp ${SOURCE_FILES})
 target_link_libraries(redis PRIVATE asio asio::asio Threads::Threads)
 
 if (CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
@@ -27,7 +28,7 @@ endif()
 
 # App for performing test
 file(GLOB_RECURSE TEST_FILES CONFIGURE_DEPENDS tests/*.cpp)
-add_executable(redis_tests ${TEST_FILES})
+add_executable(redis_tests ${TEST_FILES} ${SOURCE_FILES})
 target_link_libraries(redis_tests PRIVATE
   GTest::gtest
   GTest::gtest_main

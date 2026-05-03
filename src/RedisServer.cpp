@@ -1,4 +1,5 @@
 #include "RedisServer.hpp"
+#include "RespParser.hpp"
 
 #include <arpa/inet.h>
 #include <array>
@@ -50,10 +51,15 @@ RedisSession::RedisSession(TcpSocket socket) : socket_(std::move(socket)) {}
 void RedisSession::run()
 {
     std::array<char, 1024> buffer{};
-    constexpr std::string_view res = "+PONG\r\n";
 
     while (recv(socket_.get(), buffer.data(), buffer.size(), 0) > 0) {
-        send(socket_.get(), res.data(), res.size(), MSG_NOSIGNAL);
+        auto tokens = RespParser::parse(buffer.data());
+
+        std::string response = dispatcher_.execute(tokens);
+
+        send(socket_.get(), response.data(), response.size(), MSG_NOSIGNAL);
+
+        buffer.fill(0);
     }
 }
 
